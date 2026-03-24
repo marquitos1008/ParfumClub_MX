@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos - Admin</title>
+    <link rel="stylesheet" href="styles-admin.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- SIDEBAR (igual que dashboard) -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>🌸 Admin Panel</h2>
+                <p id="admin-name"></p>
+            </div>
+            <nav class="menu">
+                <a href="dashboard.html" class="menu-item">
+                    <span>📊</span> Dashboard
+                </a>
+                <a href="productos.html" class="menu-item active">
+                    <span>🛍️</span> Productos
+                </a>
+                <a href="pedidos.html" class="menu-item">
+                    <span>📦</span> Pedidos
+                </a>
+                <a href="#" class="menu-item" onclick="cerrarSesion()">
+                    <span>🚪</span> Cerrar Sesión
+                </a>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <header class="topbar">
+                <h1>Gestión de Productos</h1>
+                <button class="btn-primary" onclick="mostrarFormulario()">
+                    ➕ Nuevo Producto
+                </button>
+            </header>
+
+            <!-- FILTROS RÁPIDOS -->
+            <div class="filters-bar">
+                <input type="text" id="buscar-producto" placeholder="🔍 Buscar producto...">
+                <select id="filtro-categoria">
+                    <option value="">Todas las categorías</option>
+                </select>
+                <select id="filtro-marca">
+                    <option value="">Todas las marcas</option>
+                </select>
+                <button onclick="filtrarProductos()">Filtrar</button>
+            </div>
+
+            <!-- TABLA DE PRODUCTOS -->
+            <div class="table-container">
+                <table class="productos-table">
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Producto</th>
+                            <th>SKU</th>
+                            <th>Marca</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-productos">
+                        <tr>
+                            <td colspan="8" style="text-align: center;">Cargando productos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL FORMULARIO PRODUCTO -->
+    <div id="modal-producto" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2 id="modal-titulo">Nuevo Producto</h2>
+                <button class="close-btn" onclick="cerrarFormulario()">✕</button>
+            </div>
+            <form id="form-producto" enctype="multipart/form-data">
+                <div class="form-grid">
+                    <!-- INFORMACIÓN BÁSICA -->
+                    <div class="form-section">
+                        <h3>📝 Información Básica</h3>
+                        
+                        <div class="form-group">
+                            <label>Nombre del Producto *</label>
+                            <input type="text" name="nombre" required placeholder="Ej: Sauvage Eau de Parfum">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>SKU *</label>
+                                <input type="text" name="sku" required placeholder="DIOR-SAU-001">
+                            </div>
+                            <div class="form-group">
+                                <label>Tamaño *</label>
+                                <input type="text" name="tamaño" required placeholder="100ml">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Descripción Corta *</label>
+                            <textarea name="descripcion" required rows="3" placeholder="Descripción breve del producto"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Descripción Detallada</label>
+                            <textarea name="descripcionLarga" rows="5" placeholder="Descripción completa con detalles del producto"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- CLASIFICACIÓN -->
+                    <div class="form-section">
+                        <h3>📂 Clasificación</h3>
+                        
+                        <div class="form-group">
+                            <label>Categoría *</label>
+                            <select name="categoriaId" id="select-categoria" required>
+                                <option value="">Seleccionar...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Marca *</label>
+                            <select name="marcaId" id="select-marca" required>
+                                <option value="">Seleccionar...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Familia Olfativa *</label>
+                            <select name="familiaId" id="select-familia" required>
+                                <option value="">Seleccionar...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Género *</label>
+                                <select name="genero" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Hombre">Hombre</option>
+                                    <option value="Mujer">Mujer</option>
+                                    <option value="Unisex">Unisex</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Concentración *</label>
+                                <select name="concentracion" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Eau de Parfum">Eau de Parfum</option>
+                                    <option value="Eau de Toilette">Eau de Toilette</option>
+                                    <option value="Eau de Cologne">Eau de Cologne</option>
+                                    <option value="Parfum">Parfum</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PRECIOS Y STOCK -->
+                    <div class="form-section">
+                        <h3>💰 Precio e Inventario</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Precio Original *</label>
+                                <input type="number" name="precioOriginal" required step="0.01" placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label>Precio con Descuento</label>
+                                <input type="number" name="precioDescuento" step="0.01" placeholder="0.00">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>% Descuento (se calcula automático)</label>
+                            <input type="number" name="porcentajeDescuento" placeholder="0" readonly>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Stock Disponible *</label>
+                                <input type="number" name="stock" required placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Stock Mínimo *</label>
+                                <input type="number" name="stockMinimo" value="5">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NOTAS OLFATIVAS -->
+                    <div class="form-section">
+                        <h3>🌸 Notas Olfativas</h3>
+                        
+                        <div class="form-group">
+                            <label>Notas de Salida</label>
+                            <input type="text" name="notasSalida" placeholder="Ej: Bergamota, Limón, Pimienta">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Notas de Corazón</label>
+                            <input type="text" name="notasCorazon" placeholder="Ej: Lavanda, Geranio">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Notas de Fondo</label>
+                            <input type="text" name="notasFondo" placeholder="Ej: Ambroxan, Cedro, Vainilla">
+                        </div>
+                    </div>
+
+                    <!-- IMÁGENES -->
+                    <div class="form-section full-width">
+                        <h3>📸 Imágenes del Producto</h3>
+                        
+                        <div class="images-grid">
+                            <div class="image-upload">
+                                <label>Imagen Principal *</label>
+                                <input type="file" name="imagenPrincipal" accept="image/*" onchange="previsualizarImagen(this, 'preview-1')">
+                                <div class="image-preview" id="preview-1">
+                                    <span>Click para subir</span>
+                                </div>
+                            </div>
+
+                            <div class="image-upload">
+                                <label>Imagen 2</label>
+                                <input type="file" name="imagen2" accept="image/*" onchange="previsualizarImagen(this, 'preview-2')">
+                                <div class="image-preview" id="preview-2">
+                                    <span>Click para subir</span>
+                                </div>
+                            </div>
+
+                            <div class="image-upload">
+                                <label>Imagen 3</label>
+                                <input type="file" name="imagen3" accept="image/*" onchange="previsualizarImagen(this, 'preview-3')">
+                                <div class="image-preview" id="preview-3">
+                                    <span>Click para subir</span>
+                                </div>
+                            </div>
+
+                            <div class="image-upload">
+                                <label>Imagen 4</label>
+                                <input type="file" name="imagen4" accept="image/*" onchange="previsualizarImagen(this, 'preview-4')">
+                                <div class="image-preview" id="preview-4">
+                                    <span>Click para subir</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONFIGURACIÓN ADICIONAL -->
+                    <div class="form-section full-width">
+                        <h3>⚙️ Configuración</h3>
+                        
+                        <div class="form-checkboxes">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="destacado" value="true">
+                                <span>⭐ Producto Destacado</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="nuevoLanzamiento" value="true">
+                                <span>🆕 Nuevo Lanzamiento</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="cerrarFormulario()">Cancelar</button>
+                    <button type="submit" class="btn-primary">
+                        <span id="btn-submit-text">Guardar Producto</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="productos-admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Perfumería</title>
+    <link rel="stylesheet" href="styles-login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>ParfumCLub MX</h1>
+                <p>Bienvenido de vuelta</p>
+            </div>
+
+            <!-- FORMULARIO LOGIN -->
+            <div id="login-form" class="form-container">
+                <h2>Iniciar Sesión</h2>
+                
+                <form onsubmit="login(event)">
+                    <div class="form-group">
+                        <label>📧 Email</label>
+                        <input type="email" id="login-email" required placeholder="tu@email.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>🔒 Contraseña</label>
+                        <input type="password" id="login-password" required placeholder="••••••••">
+                    </div>
+
+                    <button type="submit" class="btn-primary">Entrar</button>
+                </form>
+
+                <div class="form-footer">
+                    <p>¿No tienes cuenta? <a href="#" onclick="mostrarRegistro()">Regístrate aquí</a></p>
+                    <a href="index.html" class="link-invitado">👤 Continuar como invitado</a>
+                </div>
+            </div>
+
+            <!-- FORMULARIO REGISTRO -->
+            <div id="registro-form" class="form-container hidden">
+                <h2>Crear Cuenta</h2>
+                
+                <form onsubmit="registro(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <input type="text" id="reg-nombre" required placeholder="Juan">
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido</label>
+                            <input type="text" id="reg-apellido" required placeholder="Pérez">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📧 Email</label>
+                        <input type="email" id="reg-email" required placeholder="tu@email.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>📱 Teléfono (opcional)</label>
+                        <input type="tel" id="reg-telefono" placeholder="6691234567">
+                    </div>
+
+                    <div class="form-group">
+                        <label>🔒 Contraseña</label>
+                        <input type="password" id="reg-password" required placeholder="Mínimo 6 caracteres">
+                    </div>
+
+                    <button type="submit" class="btn-primary">Crear Cuenta</button>
+                </form>
+
+                <div class="form-footer">
+                    <p>¿Ya tienes cuenta? <a href="#" onclick="mostrarLogin()">Inicia sesión</a></p>
+                    <a href="index.html" class="link-invitado">👤 Continuar como invitado</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Perfumería</title>
+    <link rel="stylesheet" href="styles-admin.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>🌸 Admin Panel</h2>
+                <p id="admin-name"></p>
+            </div>
+            <nav class="menu">
+                <a href="dashboard.html" class="menu-item active">
+                    <span>📊</span> Dashboard
+                </a>
+                <a href="productos.html" class="menu-item">
+                    <span>🛍️</span> Productos
+                </a>
+                <a href="pedidos.html" class="menu-item">
+                    <span>📦</span> Pedidos
+                </a>
+                <a href="#" class="menu-item" onclick="cerrarSesion()">
+                    <span>🚪</span> Cerrar Sesión
+                </a>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <header class="topbar">
+                <h1>Dashboard</h1>
+                <div class="user-info">
+                    <span>Administrador</span>
+                </div>
+            </header>
+
+            <!-- ESTADÍSTICAS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #667eea;">🛍️</div>
+                    <div class="stat-info">
+                        <h3 id="stat-productos">0</h3>
+                        <p>Productos Activos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #f093fb;">👥</div>
+                    <div class="stat-info">
+                        <h3 id="stat-clientes">0</h3>
+                        <p>Clientes</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #4facfe;">📦</div>
+                    <div class="stat-info">
+                        <h3 id="stat-pedidos">0</h3>
+                        <p>Pedidos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #43e97b;">💰</div>
+                    <div class="stat-info">
+                        <h3 id="stat-ventas">$0</h3>
+                        <p>Ventas Totales</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ALERTAS -->
+            <div class="alerts-section">
+                <h2>⚠️ Alertas de Stock</h2>
+                <div id="alertas-stock" class="alerts-list">
+                    <p>Cargando...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

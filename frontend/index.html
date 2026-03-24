@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfumería Online - Inicio</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container">
+            <div class="header-top">
+                <div class="logo">
+                    <h1>ParfumClub MX</h1>
+                </div>
+                
+                <div class="header-actions">
+                    <!-- BÚSQUEDA -->
+                    <div class="search-box">
+                        <input type="text" id="busqueda-global" placeholder="Buscar perfumes...">
+                        <button onclick="buscarProductos()">🔍</button>
+                    </div>
+                    
+                    <!-- USUARIO -->
+                    <div class="user-menu">
+                        <button class="icon-btn" onclick="toggleUserMenu()">
+                            <span id="user-icon">👤</span>
+                        </button>
+                        <div id="user-dropdown" class="dropdown hidden">
+                            <!-- Contenido dinámico -->
+                        </div>
+                    </div>
+                    
+                    <!-- FAVORITOS -->
+                    <button class="icon-btn" onclick="irAFavoritos()">
+                        <span>❤️</span>
+                        <span class="badge" id="badge-favoritos">0</span>
+                    </button>
+                    
+                    <!-- CARRITO -->
+                    <button class="icon-btn" onclick="toggleCarrito()">
+                        <span>🛒</span>
+                        <span class="badge" id="badge-carrito">0</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- NAVEGACIÓN -->
+            <nav class="main-nav">
+                <a href="#" onclick="filtrarPorGenero('')" class="nav-link active">Todos</a>
+                <a href="#" onclick="filtrarPorGenero('Mujer')" class="nav-link">Mujer</a>
+                <a href="#" onclick="filtrarPorGenero('Hombre')" class="nav-link">Hombre</a>
+                <a href="#" onclick="filtrarPorGenero('Unisex')" class="nav-link">Unisex</a>
+                <a href="#" onclick="mostrarDestacados()" class="nav-link">⭐ Destacados</a>
+                <a href="#" onclick="mostrarNuevos()" class="nav-link">🆕 Nuevos</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- BANNER PROMOCIONAL -->
+    <section class="banner">
+        <div class="container">
+            <div class="banner-content">
+                <h2>¡Ofertas de Temporada!</h2>
+                <p>Hasta 20% de descuento en fragancias seleccionadas</p>
+                <button class="btn-banner" onclick="verOfertas()">Ver Ofertas</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- FILTROS -->
+    <section class="filters-section">
+        <div class="container">
+            <button class="filter-toggle" onclick="toggleFiltros()">
+                🎯 Filtros Avanzados
+            </button>
+            
+            <div id="filtros-avanzados" class="filtros-grid hidden">
+                <div class="filter-group">
+                    <label>Marca</label>
+                    <select id="filtro-marca">
+                        <option value="">Todas las marcas</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Categoría</label>
+                    <select id="filtro-categoria">
+                        <option value="">Todas las categorías</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Familia Olfativa</label>
+                    <select id="filtro-familia">
+                        <option value="">Todas las familias</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Rango de Precio</label>
+                    <div class="price-range">
+                        <input type="number" id="precio-min" placeholder="Min">
+                        <span>-</span>
+                        <input type="number" id="precio-max" placeholder="Max">
+                    </div>
+                </div>
+                
+                <div class="filter-actions">
+                    <button class="btn-primary" onclick="aplicarFiltros()">Aplicar</button>
+                    <button class="btn-secondary" onclick="limpiarFiltros()">Limpiar</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRODUCTOS -->
+    <section class="productos-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 id="section-title">Todos los Productos</h2>
+                <div class="sort-options">
+                    <label>Ordenar por:</label>
+                    <select id="ordenar" onchange="ordenarProductos()">
+                        <option value="destacados">Destacados</option>
+                        <option value="precio-asc">Precio: Menor a Mayor</option>
+                        <option value="precio-desc">Precio: Mayor a Menor</option>
+                        <option value="nombre">Nombre A-Z</option>
+                        <option value="nuevos">Más Recientes</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="productos-grid" class="productos-grid">
+                <div class="loading">Cargando productos...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODAL DETALLE PRODUCTO -->
+    <div id="modal-detalle" class="modal">
+        <div class="modal-content producto-detalle">
+            <button class="close-modal" onclick="cerrarDetalle()">✕</button>
+            <div id="detalle-contenido">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SIDEBAR CARRITO -->
+    <div id="sidebar-carrito" class="sidebar-carrito">
+        <div class="carrito-header">
+            <h3>🛒 Mi Carrito</h3>
+            <button onclick="toggleCarrito()">✕</button>
+        </div>
+        
+        <div id="carrito-items" class="carrito-items">
+            <!-- Contenido dinámico -->
+        </div>
+        
+        <div class="carrito-footer">
+            <div class="carrito-total">
+                <span>Total:</span>
+                <strong id="carrito-total">$0.00</strong>
+            </div>
+            <button class="btn-checkout" onclick="procederCompra()">
+                Proceder al Pago
+            </button>
+        </div>
+    </div>
+
+    <!-- OVERLAY -->
+    <div id="overlay" class="overlay" onclick="cerrarTodo()"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
