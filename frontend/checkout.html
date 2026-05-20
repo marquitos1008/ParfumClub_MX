@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - ParfumClubMX</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-checkout.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-checkout.css">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container-header">
+            <div class="logo">
+                <a href="index.html">🌸 ParfumClubMX</a>
+            </div>
+            <nav class="nav-checkout">
+                <a href="index.html">← Volver a la tienda</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <div class="checkout-container">
+        <!-- Pasos del Checkout -->
+        <div class="checkout-steps">
+            <div class="step active" data-step="1">
+                <span class="step-number">1</span>
+                <span class="step-text">Dirección</span>
+            </div>
+            <div class="step" data-step="2">
+                <span class="step-number">2</span>
+                <span class="step-text">Método de Pago</span>
+            </div>
+            <div class="step" data-step="3">
+                <span class="step-number">3</span>
+                <span class="step-text">Confirmación</span>
+            </div>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="checkout-content">
+            <!-- Columna Izquierda: Formularios -->
+            <div class="checkout-main">
+                
+                <!-- PASO 1: Dirección de Envío -->
+                <div class="checkout-section" id="seccion-direccion">
+                    <h2>📍 Dirección de Envío</h2>
+                    
+                    <!-- Direcciones Guardadas -->
+                    <div id="direcciones-guardadas"></div>
+                    
+                    <!-- Botón Agregar Nueva Dirección -->
+                    <button class="btn-agregar-direccion" onclick="mostrarFormularioDireccion()">
+                        ➕ Agregar nueva dirección
+                    </button>
+                    
+                    <!-- Formulario Nueva Dirección (oculto inicialmente) -->
+                    <div id="formulario-direccion" style="display: none;">
+                        <h3>Nueva Dirección</h3>
+                        <form id="form-direccion">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Nombre completo *</label>
+                                    <input type="text" id="dir-nombre" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Teléfono *</label>
+                                    <input type="tel" id="dir-telefono" required>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label>Calle *</label>
+                                    <input type="text" id="dir-calle" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Número exterior *</label>
+                                    <input type="text" id="dir-num-ext" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Número interior</label>
+                                    <input type="text" id="dir-num-int">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Colonia *</label>
+                                    <input type="text" id="dir-colonia" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Ciudad *</label>
+                                    <input type="text" id="dir-ciudad" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Estado *</label>
+                                    <select id="dir-estado" required>
+                                        <option value="">Selecciona...</option>
+                                        <option value="Aguascalientes">Aguascalientes</option>
+                                        <option value="Baja California">Baja California</option>
+                                        <option value="Baja California Sur">Baja California Sur</option>
+                                        <option value="Campeche">Campeche</option>
+                                        <option value="Chiapas">Chiapas</option>
+                                        <option value="Chihuahua">Chihuahua</option>
+                                        <option value="CDMX">Ciudad de México</option>
+                                        <option value="Coahuila">Coahuila</option>
+                                        <option value="Colima">Colima</option>
+                                        <option value="Durango">Durango</option>
+                                        <option value="Guanajuato">Guanajuato</option>
+                                        <option value="Guerrero">Guerrero</option>
+                                        <option value="Hidalgo">Hidalgo</option>
+                                        <option value="Jalisco">Jalisco</option>
+                                        <option value="México">México</option>
+                                        <option value="Michoacán">Michoacán</option>
+                                        <option value="Morelos">Morelos</option>
+                                        <option value="Nayarit">Nayarit</option>
+                                        <option value="Nuevo León">Nuevo León</option>
+                                        <option value="Oaxaca">Oaxaca</option>
+                                        <option value="Puebla">Puebla</option>
+                                        <option value="Querétaro">Querétaro</option>
+                                        <option value="Quintana Roo">Quintana Roo</option>
+                                        <option value="San Luis Potosí">San Luis Potosí</option>
+                                        <option value="Sinaloa">Sinaloa</option>
+                                        <option value="Sonora">Sonora</option>
+                                        <option value="Tabasco">Tabasco</option>
+                                        <option value="Tamaulipas">Tamaulipas</option>
+                                        <option value="Tlaxcala">Tlaxcala</option>
+                                        <option value="Veracruz">Veracruz</option>
+                                        <option value="Yucatán">Yucatán</option>
+                                        <option value="Zacatecas">Zacatecas</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Código Postal *</label>
+                                    <input type="text" id="dir-cp" maxlength="5" required>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label>Referencias (opcional)</label>
+                                    <textarea id="dir-referencias" rows="2"></textarea>
+                                </div>
+                                
+                                <div class="form-group full-width">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="dir-predeterminada">
+                                        Usar como dirección predeterminada
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="btn-secundario" onclick="ocultarFormularioDireccion()">
+                                    Cancelar
+                                </button>
+                                <button type="submit" class="btn-primario">
+                                    Guardar Dirección
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <button class="btn-continuar" id="btn-continuar-pago" onclick="continuarAPago()" disabled>
+                        Continuar al Pago →
+                    </button>
+                </div>
+
+                <!-- PASO 2: Método de Pago -->
+<div class="checkout-section" id="seccion-pago" style="display: none;">
+    <h2>💳 Método de Pago</h2>
+    
+    <div class="metodos-pago">
+        <label class="metodo-pago-option">
+            <input type="radio" name="metodoPago" value="Tarjeta" checked>
+            <div class="metodo-pago-card">
+                <span class="metodo-icono">💳</span>
+                <div>
+                    <strong>Tarjeta de Crédito/Débito</strong>
+                    <p>Pago seguro con Stripe</p>
+                </div>
+            </div>
+        </label>
+        
+       
+        <div id="stripe-card-container" style="margin-top: 20px;">
+            <div id="card-element" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: white;">
+                <!-- Stripe insertará el formulario aquí -->
+            </div>
+            <div id="card-errors" style="color: var(--danger); margin-top: 10px; font-size: 14px;"></div>
+        </div>
+        
+        
+        <label class="metodo-pago-option">
+            <input type="radio" name="metodoPago" value="Efectivo">
+            <div class="metodo-pago-card">
+                <span class="metodo-icono">💵</span>
+                <div>
+                    <strong>Efectivo (Contra Entrega)</strong>
+                    <p>Paga al recibir tu pedido</p>
+                </div>
+            </div>
+        </label>
+    </div>
+    
+    <div class="form-actions">
+        <button class="btn-secundario" onclick="volverADireccion()">
+            ← Volver
+        </button>
+        <button class="btn-continuar" onclick="continuarAConfirmacion()">
+            Continuar a Confirmación →
+        </button>
+    </div>
+</div>
+
+                <!-- PASO 3: Confirmación -->
+                <div class="checkout-section" id="seccion-confirmacion" style="display: none;">
+                    <h2>✅ Confirmar Pedido</h2>
+                    
+                    <div class="resumen-confirmacion">
+                        <div class="confirmacion-seccion">
+                            <h3>📍 Dirección de Envío</h3>
+                            <div id="confirmacion-direccion"></div>
+                            <button class="btn-editar" onclick="volverADireccion()">Cambiar</button>
+                        </div>
+                        
+                        <div class="confirmacion-seccion">
+                            <h3>💳 Método de Pago</h3>
+                            <div id="confirmacion-pago"></div>
+                            <button class="btn-editar" onclick="volverAPago()">Cambiar</button>
+                        </div>
+                        
+                        <div class="confirmacion-seccion">
+                            <h3>🛒 Productos</h3>
+                            <div id="confirmacion-productos"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="btn-secundario" onclick="volverAPago()">
+                            ← Volver
+                        </button>
+                        <button class="btn-finalizar" onclick="finalizarPedido()">
+                            🎉 Finalizar Pedido
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Columna Derecha: Resumen del Pedido -->
+            <div class="checkout-sidebar">
+                <div class="resumen-pedido sticky">
+                    <h3>Resumen del Pedido</h3>
+                    
+                    <div id="resumen-productos"></div>
+                    
+                    <div class="resumen-totales">
+                        <div class="resumen-linea">
+                            <span>Subtotal:</span>
+                            <span id="resumen-subtotal">$0.00</span>
+                        </div>
+                        <div class="resumen-linea">
+                            <span>Envío:</span>
+                            <span id="resumen-envio">$150.00</span>
+                        </div>
+                        <div class="resumen-linea descuento" id="linea-descuento" style="display: none;">
+                            <span>Descuento:</span>
+                            <span id="resumen-descuento">-$0.00</span>
+                        </div>
+                        <div class="resumen-linea total">
+                            <strong>Total:</strong>
+                            <strong id="resumen-total">$0.00</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="codigo-descuento">
+                        <input type="text" id="input-cupon" placeholder="Código de descuento">
+                        <button onclick="aplicarCupon()">Aplicar</button>
+                    </div>
+                    
+                    <div class="garantias">
+                        <p>✅ Envío gratis en compras mayores a $1,500</p>
+                        <p>🔒 Compra 100% segura</p>
+                        <p>↩️ 30 días para devoluciones</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Éxito -->
+    <div id="modal-exito" class="modal">
+        <div class="modal-content exito">
+            <div class="exito-icono">🎉</div>
+            <h2>¡Pedido Realizado con Éxito!</h2>
+            <p>Tu número de pedido es:</p>
+            <div class="numero-pedido" id="numero-pedido-exito"></div>
+            <p>Recibirás un email de confirmación en breve.</p>
+            <div class="modal-actions">
+                <a href="index.html" class="btn-primario">Volver a la Tienda</a>
+                <a href="mis-pedidos.html" class="btn-secundario">Ver Mis Pedidos</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="checkout.js"></script>
+</body>
+</html>

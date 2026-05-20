@@ -4,7 +4,7 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-
+const stripe = require('stripe')('sk_test_51TYyduQyWORSQ9oNwKQsbBs2raDzLv4C9GVVUL8a33OVD0nTOTdGryg52agWHsEBe5jX4Cbla6TKYusGjAaCDagL00zaSY9L5f');
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -684,6 +684,614 @@ app.get('/api/admin/stats', verificarAdmin, async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+// ============================================
+// ⬇️⬇️⬇️ AGREGAR TODO EL CÓDIGO NUEVO AQUÍ ⬇️⬇️⬇️
+// ============================================
+
+// ============================================
+// RUTAS DE PEDIDOS
+// ============================================
+
+// Crear pedido desde carrito
+app.post('/api/pedidos', async (req, res) => {
+    try {
+        const { 
+            usuarioId, 
+            direccionId, 
+            metodoPago, 
+            items, // Array de {productoId, cantidad, precioUnitario}
+            subtotal,
+            costoEnvio,
+            cuponId = null,
+            descuento = 0
+        } = req.body;
+        
+        // Validar stock de todos los productos
+        for (const item of items) {
+            const stockResult = await pool.request()
+                .input('productoId', sql.Int, item.productoId)
+                .query('SELECT Stock FROM Productos WHERE ProductoID = @productoId');
+            
+            if (stockResult.recordset[0].Stock < item.cantidad) {
+                return res.status(400).json({ 
+                    error: `Stock insuficiente para el producto ${item.productoId}` 
+                });
+            }
+        }
+        
+        const total = subtotal + costoEnvio - descuento;
+        
+        // Generar número de pedido único
+        const numeroPedido = `PED-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        
+        // Insertar pedido
+        const pedidoResult = await pool.request()
+            .input('usuarioId', sql.Int, usuarioId)
+            .input('direccionId', sql.Int, direccionId)
+            .input('numeroPedido', sql.NVarChar, numeroPedido)
+            .input('subtotal', sql.Decimal(10, 2), subtotal)
+            .input('descuento', sql.Decimal(10, 2), descuento)
+            .input('costoEnvio', sql.Decimal(10, 2), costoEnvio)
+            .input('total', sql.Decimal(10, 2), total)
+            .input('metodoPago', sql.NVarChar, metodoPago)
+            .input('cuponId', sql.Int, cuponId)
+            .query(`
+                INSERT INTO Pedidos (
+                    UsuarioID, DireccionEnvioID, NumeroPedido, 
+                    Subtotal, Descuento, CostoEnvio, Total,
+                    EstadoPedido, EstadoPago, MetodoPago, CuponID
+                ) VALUES (
+                    @usuarioId, @direccionId, @numeroPedido,
+                    @subtotal, @descuento, @costoEnvio, @total,
+                    'Pendiente', 'Pendiente', @metodoPago, @cuponId
+                );
+                SELECT SCOPE_IDENTITY() as PedidoID;
+            `);
+        
+        const pedidoId = pedidoResult.recordset[0].PedidoID;
+        
+        // Insertar detalles del pedido y actualizar stock
+        for (const item of items) {
+            // Insertar detalle
+            await pool.request()
+                .input('pedidoId', sql.Int, pedidoId)
+                .input('productoId', sql.Int, item.productoId)
+                .input('cantidad', sql.Int, item.cantidad)
+                .input('precioUnitario', sql.Decimal(10, 2), item.precioUnitario)
+                .query(`
+                    INSERT INTO DetallePedido (PedidoID, ProductoID, Cantidad, PrecioUnitario)
+                    VALUES (@pedidoId, @productoId, @cantidad, @precioUnitario)
+                `);
+            
+            // Reducir stock
+            await pool.request()
+                .input('productoId', sql.Int, item.productoId)
+                .input('cantidad', sql.Int, item.cantidad)
+                .query(`
+                    UPDATE Productos 
+                    SET Stock = Stock - @cantidad,
+                        VentasTotales = ISNULL(VentasTotales, 0) + @cantidad
+                    WHERE ProductoID = @productoId
+                `);
+        }
+        
+        // Limpiar carrito del usuario
+        await pool.request()
+            .input('usuarioId', sql.Int, usuarioId)
+            .query('DELETE FROM Carrito WHERE UsuarioID = @usuarioId');
+        
+        res.json({ 
+            success: true, 
+            mensaje: 'Pedido creado exitosamente',
+            pedidoId: pedidoId,
+            numeroPedido: numeroPedido
+        });
+        
+    } catch (err) {
+        console.error('Error al crear pedido:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Obtener pedidos del usuario
+app.get('/api/pedidos/usuario/:userId', async (req, res) => {
+    try {
+        const result = await pool.request()
+            .input('userId', sql.Int, req.params.userId)
+            .query(`
+                SELECT 
+                    p.*,
+                    d.Calle, d.Ciudad, d.Estado, d.CodigoPostal,
+                    COUNT(dp.DetalleID) as TotalProductos
+                FROM Pedidos p
+                LEFT JOIN Direcciones d ON p.DireccionEnvioID = d.DireccionID
+                LEFT JOIN DetallePedido dp ON p.PedidoID = dp.PedidoID
+                WHERE p.UsuarioID = @userId
+                GROUP BY p.PedidoID, p.UsuarioID, p.DireccionEnvioID, p.NumeroPedido,
+                         p.Subtotal, p.Descuento, p.CostoEnvio, p.Total,
+                         p.EstadoPedido, p.EstadoPago, p.MetodoPago,
+                         p.FechaPedido, p.FechaConfirmacion, p.FechaEnvio, p.FechaEntrega,
+                         p.GuiaRastreo, p.Paqueteria, p.CuponID, p.NotasInternas,
+                         d.Calle, d.Ciudad, d.Estado, d.CodigoPostal
+                ORDER BY p.FechaPedido DESC
+            `);
+        
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Obtener detalle completo de un pedido
+app.get('/api/pedidos/:id', async (req, res) => {
+    try {
+        // Datos del pedido
+        const pedidoResult = await pool.request()
+            .input('id', sql.Int, req.params.id)
+            .query(`
+                SELECT 
+                    p.*,
+                    u.Nombre, u.Apellido, u.Email, u.Telefono,
+                    d.Calle, d.NumeroExterior, d.NumeroInterior, d.Colonia,
+                    d.Ciudad, d.Estado, d.CodigoPostal, d.Referencias
+                FROM Pedidos p
+                INNER JOIN Usuarios u ON p.UsuarioID = u.UsuarioID
+                LEFT JOIN Direcciones d ON p.DireccionEnvioID = d.DireccionID
+                WHERE p.PedidoID = @id
+            `);
+        
+        if (pedidoResult.recordset.length === 0) {
+            return res.status(404).json({ error: 'Pedido no encontrado' });
+        }
+        
+        const pedido = pedidoResult.recordset[0];
+        
+        // Detalles (productos) del pedido
+        const detallesResult = await pool.request()
+            .input('id', sql.Int, req.params.id)
+            .query(`
+                SELECT 
+                    dp.*,
+                    prod.Nombre, prod.ImagenPrincipal, prod.SKU,
+                    m.NombreMarca
+                FROM DetallePedido dp
+                INNER JOIN Productos prod ON dp.ProductoID = prod.ProductoID
+                LEFT JOIN Marcas m ON prod.MarcaID = m.MarcaID
+                WHERE dp.PedidoID = @id
+            `);
+        
+        pedido.Detalles = detallesResult.recordset;
+        
+        res.json(pedido);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Actualizar estado de pedido (Admin)
+app.put('/api/admin/pedidos/:id/estado', verificarAdmin, async (req, res) => {
+    try {
+        const { estadoPedido, estadoPago, guiaRastreo, paqueteria } = req.body;
+        
+        const updates = [];
+        const request = pool.request().input('id', sql.Int, req.params.id);
+        
+        if (estadoPedido) {
+            updates.push('EstadoPedido = @estadoPedido');
+            request.input('estadoPedido', sql.NVarChar, estadoPedido);
+            
+            // Actualizar fechas según estado
+            if (estadoPedido === 'Confirmado') {
+                updates.push('FechaConfirmacion = GETDATE()');
+            } else if (estadoPedido === 'Enviado') {
+                updates.push('FechaEnvio = GETDATE()');
+            } else if (estadoPedido === 'Entregado') {
+                updates.push('FechaEntrega = GETDATE()');
+            }
+        }
+        
+        if (estadoPago) {
+            updates.push('EstadoPago = @estadoPago');
+            request.input('estadoPago', sql.NVarChar, estadoPago);
+        }
+        
+        if (guiaRastreo) {
+            updates.push('GuiaRastreo = @guiaRastreo');
+            request.input('guiaRastreo', sql.NVarChar, guiaRastreo);
+        }
+        
+        if (paqueteria) {
+            updates.push('Paqueteria = @paqueteria');
+            request.input('paqueteria', sql.NVarChar, paqueteria);
+        }
+        
+        if (updates.length === 0) {
+            return res.status(400).json({ error: 'No hay campos para actualizar' });
+        }
+        
+        await request.query(`
+            UPDATE Pedidos 
+            SET ${updates.join(', ')}
+            WHERE PedidoID = @id
+        `);
+        
+        res.json({ success: true, mensaje: 'Pedido actualizado exitosamente' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Obtener todos los pedidos (Admin)
+app.get('/api/admin/pedidos', verificarAdmin, async (req, res) => {
+    try {
+        const { estado, desde, hasta } = req.query;
+        
+        let query = `
+            SELECT 
+                p.PedidoID, p.NumeroPedido, p.Total, p.EstadoPedido, p.EstadoPago,
+                p.MetodoPago, p.FechaPedido,
+                u.Nombre + ' ' + u.Apellido as NombreCliente,
+                u.Email,
+                COUNT(dp.DetalleID) as TotalProductos
+            FROM Pedidos p
+            INNER JOIN Usuarios u ON p.UsuarioID = u.UsuarioID
+            LEFT JOIN DetallePedido dp ON p.PedidoID = dp.PedidoID
+            WHERE 1=1
+        `;
+        
+        if (estado) query += ` AND p.EstadoPedido = '${estado}'`;
+        if (desde) query += ` AND p.FechaPedido >= '${desde}'`;
+        if (hasta) query += ` AND p.FechaPedido <= '${hasta}'`;
+        
+        query += `
+            GROUP BY p.PedidoID, p.NumeroPedido, p.Total, p.EstadoPedido, p.EstadoPago,
+                     p.MetodoPago, p.FechaPedido, u.Nombre, u.Apellido, u.Email
+            ORDER BY p.FechaPedido DESC
+        `;
+        
+        const result = await pool.request().query(query);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// RUTAS DE DIRECCIONES
+// ============================================
+
+// Obtener direcciones del usuario
+app.get('/api/direcciones/usuario/:userId', async (req, res) => {
+    try {
+        const result = await pool.request()
+            .input('userId', sql.Int, req.params.userId)
+            .query(`
+                SELECT * FROM Direcciones 
+                WHERE UsuarioID = @userId 
+                ORDER BY EsPredeterminada DESC, FechaCreacion DESC
+            `);
+        
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Agregar nueva dirección
+app.post('/api/direcciones', async (req, res) => {
+    try {
+        const {
+            usuarioId, nombreCompleto, telefono,
+            calle, numeroExterior, numeroInterior, colonia,
+            ciudad, estado, codigoPostal, referencias,
+            esPredeterminada
+        } = req.body;
+        
+        // Si es predeterminada, quitar bandera de otras direcciones
+        if (esPredeterminada) {
+            await pool.request()
+                .input('userId', sql.Int, usuarioId)
+                .query('UPDATE Direcciones SET EsPredeterminada = 0 WHERE UsuarioID = @userId');
+        }
+        
+        const result = await pool.request()
+            .input('usuarioId', sql.Int, usuarioId)
+            .input('nombreCompleto', sql.NVarChar, nombreCompleto)
+            .input('telefono', sql.NVarChar, telefono)
+            .input('calle', sql.NVarChar, calle)
+            .input('numeroExterior', sql.NVarChar, numeroExterior)
+            .input('numeroInterior', sql.NVarChar, numeroInterior || null)
+            .input('colonia', sql.NVarChar, colonia)
+            .input('ciudad', sql.NVarChar, ciudad)
+            .input('estado', sql.NVarChar, estado)
+            .input('codigoPostal', sql.NVarChar, codigoPostal)
+            .input('referencias', sql.NVarChar, referencias || null)
+            .input('esPredeterminada', sql.Bit, esPredeterminada ? 1 : 0)
+            .query(`
+                INSERT INTO Direcciones (
+                    UsuarioID, NombreCompleto, Telefono,
+                    Calle, NumeroExterior, NumeroInterior, Colonia,
+                    Ciudad, Estado, CodigoPostal, Referencias,
+                    EsPredeterminada
+                ) VALUES (
+                    @usuarioId, @nombreCompleto, @telefono,
+                    @calle, @numeroExterior, @numeroInterior, @colonia,
+                    @ciudad, @estado, @codigoPostal, @referencias,
+                    @esPredeterminada
+                );
+                SELECT SCOPE_IDENTITY() as DireccionID;
+            `);
+        
+        res.json({ 
+            success: true, 
+            mensaje: 'Dirección agregada exitosamente',
+            direccionId: result.recordset[0].DireccionID
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Actualizar dirección
+app.put('/api/direcciones/:id', async (req, res) => {
+    try {
+        const {
+            nombreCompleto, telefono,
+            calle, numeroExterior, numeroInterior, colonia,
+            ciudad, estado, codigoPostal, referencias,
+            esPredeterminada, usuarioId
+        } = req.body;
+        
+        if (esPredeterminada) {
+            await pool.request()
+                .input('userId', sql.Int, usuarioId)
+                .query('UPDATE Direcciones SET EsPredeterminada = 0 WHERE UsuarioID = @userId');
+        }
+        
+        await pool.request()
+            .input('id', sql.Int, req.params.id)
+            .input('nombreCompleto', sql.NVarChar, nombreCompleto)
+            .input('telefono', sql.NVarChar, telefono)
+            .input('calle', sql.NVarChar, calle)
+            .input('numeroExterior', sql.NVarChar, numeroExterior)
+            .input('numeroInterior', sql.NVarChar, numeroInterior || null)
+            .input('colonia', sql.NVarChar, colonia)
+            .input('ciudad', sql.NVarChar, ciudad)
+            .input('estado', sql.NVarChar, estado)
+            .input('codigoPostal', sql.NVarChar, codigoPostal)
+            .input('referencias', sql.NVarChar, referencias || null)
+            .input('esPredeterminada', sql.Bit, esPredeterminada ? 1 : 0)
+            .query(`
+                UPDATE Direcciones SET
+                    NombreCompleto = @nombreCompleto,
+                    Telefono = @telefono,
+                    Calle = @calle,
+                    NumeroExterior = @numeroExterior,
+                    NumeroInterior = @numeroInterior,
+                    Colonia = @colonia,
+                    Ciudad = @ciudad,
+                    Estado = @estado,
+                    CodigoPostal = @codigoPostal,
+                    Referencias = @referencias,
+                    EsPredeterminada = @esPredeterminada
+                WHERE DireccionID = @id
+            `);
+        
+        res.json({ success: true, mensaje: 'Dirección actualizada exitosamente' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Eliminar dirección
+app.delete('/api/direcciones/:id', async (req, res) => {
+    try {
+        await pool.request()
+            .input('id', sql.Int, req.params.id)
+            .query('DELETE FROM Direcciones WHERE DireccionID = @id');
+        
+        res.json({ success: true, mensaje: 'Dirección eliminada exitosamente' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// RUTAS DE PAGOS CON STRIPE
+// ============================================
+
+// Crear intención de pago (Payment Intent)
+app.post('/api/crear-intencion-pago', async (req, res) => {
+    try {
+        const { monto, descripcion, metadata } = req.body;
+        
+        // Crear Payment Intent en Stripe
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(monto * 100), // Stripe usa centavos
+            currency: 'mxn',
+            description: descripcion,
+            metadata: metadata, // Info adicional del pedido
+            automatic_payment_methods: {
+                enabled: true,
+            },
+        });
+        
+        res.json({
+            success: true,
+            clientSecret: paymentIntent.client_secret,
+            paymentIntentId: paymentIntent.id
+        });
+        
+    } catch (err) {
+        console.error('Error Stripe:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Confirmar pago y crear pedido
+app.post('/api/confirmar-pago-pedido', async (req, res) => {
+    try {
+        const { 
+            paymentIntentId,
+            usuarioId, 
+            direccionId, 
+            items,
+            subtotal,
+            costoEnvio,
+            descuento = 0
+        } = req.body;
+        
+        // Verificar el pago en Stripe
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        
+        if (paymentIntent.status !== 'succeeded') {
+            return res.status(400).json({ 
+                error: 'El pago no ha sido completado' 
+            });
+        }
+        
+        // Validar stock
+        for (const item of items) {
+            const stockResult = await pool.request()
+                .input('productoId', sql.Int, item.productoId)
+                .query('SELECT Stock FROM Productos WHERE ProductoID = @productoId');
+            
+            if (stockResult.recordset[0].Stock < item.cantidad) {
+                return res.status(400).json({ 
+                    error: `Stock insuficiente para el producto ${item.productoId}` 
+                });
+            }
+        }
+        
+        const total = subtotal + costoEnvio - descuento;
+        const numeroPedido = `PED-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        
+        // Insertar pedido
+        const pedidoResult = await pool.request()
+            .input('usuarioId', sql.Int, usuarioId)
+            .input('direccionId', sql.Int, direccionId)
+            .input('numeroPedido', sql.NVarChar, numeroPedido)
+            .input('subtotal', sql.Decimal(10, 2), subtotal)
+            .input('descuento', sql.Decimal(10, 2), descuento)
+            .input('costoEnvio', sql.Decimal(10, 2), costoEnvio)
+            .input('total', sql.Decimal(10, 2), total)
+            .input('paymentIntentId', sql.NVarChar, paymentIntentId)
+            .query(`
+                INSERT INTO Pedidos (
+                    UsuarioID, DireccionEnvioID, NumeroPedido, 
+                    Subtotal, Descuento, CostoEnvio, Total,
+                    EstadoPedido, EstadoPago, MetodoPago, StripePaymentIntentID
+                ) VALUES (
+                    @usuarioId, @direccionId, @numeroPedido,
+                    @subtotal, @descuento, @costoEnvio, @total,
+                    'Confirmado', 'Pagado', 'Tarjeta', @paymentIntentId
+                );
+                SELECT SCOPE_IDENTITY() as PedidoID;
+            `);
+        
+        const pedidoId = pedidoResult.recordset[0].PedidoID;
+        
+        // Insertar detalles y actualizar stock
+        for (const item of items) {
+            await pool.request()
+                .input('pedidoId', sql.Int, pedidoId)
+                .input('productoId', sql.Int, item.productoId)
+                .input('cantidad', sql.Int, item.cantidad)
+                .input('precioUnitario', sql.Decimal(10, 2), item.precioUnitario)
+                .query(`
+                    INSERT INTO DetallePedido (PedidoID, ProductoID, Cantidad, PrecioUnitario)
+                    VALUES (@pedidoId, @productoId, @cantidad, @precioUnitario)
+                `);
+            
+            await pool.request()
+                .input('productoId', sql.Int, item.productoId)
+                .input('cantidad', sql.Int, item.cantidad)
+                .query(`
+                    UPDATE Productos 
+                    SET Stock = Stock - @cantidad,
+                        VentasTotales = ISNULL(VentasTotales, 0) + @cantidad
+                    WHERE ProductoID = @productoId
+                `);
+        }
+        
+        // Limpiar carrito
+        await pool.request()
+            .input('usuarioId', sql.Int, usuarioId)
+            .query('DELETE FROM Carrito WHERE UsuarioID = @usuarioId');
+        
+        res.json({ 
+            success: true, 
+            mensaje: 'Pedido creado exitosamente',
+            pedidoId: pedidoId,
+            numeroPedido: numeroPedido
+        });
+        
+    } catch (err) {
+        console.error('Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// WebHook de Stripe (para recibir eventos de pago)
+app.post('/api/webhook-stripe', express.raw({type: 'application/json'}), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = 'tu_webhook_secret'; // Lo obtendrás de Stripe Dashboard
+    
+    let event;
+    
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err) {
+        console.error('Webhook error:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    
+    // Manejar eventos de Stripe
+    switch (event.type) {
+        case 'payment_intent.succeeded':
+            const paymentIntent = event.data.object;
+            console.log('✅ Pago exitoso:', paymentIntent.id);
+            
+            // Actualizar estado del pedido en BD
+            await pool.request()
+                .input('paymentIntentId', sql.NVarChar, paymentIntent.id)
+                .query(`
+                    UPDATE Pedidos 
+                    SET EstadoPago = 'Pagado',
+                        EstadoPedido = 'Confirmado',
+                        FechaConfirmacion = GETDATE()
+                    WHERE StripePaymentIntentID = @paymentIntentId
+                `);
+            break;
+            
+        case 'payment_intent.payment_failed':
+            const failedPayment = event.data.object;
+            console.log('❌ Pago fallido:', failedPayment.id);
+            
+            await pool.request()
+                .input('paymentIntentId', sql.NVarChar, failedPayment.id)
+                .query(`
+                    UPDATE Pedidos 
+                    SET EstadoPago = 'Rechazado',
+                        EstadoPedido = 'Cancelado'
+                    WHERE StripePaymentIntentID = @paymentIntentId
+                `);
+            break;
+            
+        default:
+            console.log(`Evento no manejado: ${event.type}`);
+    }
+    
+    res.json({ received: true });
+});
+
+// Obtener clave pública de Stripe (para el frontend)
+app.get('/api/stripe-public-key', (req, res) => {
+    res.json({ 
+        publicKey: 'pk_test_51TYyduQyWORSQ9oNgkWXaQ8ckJKsWuRrbz29Z2fAbxw0C49OLU7dN6bhJ9T4gaOJjjK5rgPgq9tNDm49YW3osWpQ00YJRlSOeI' // La obtendrás de Stripe
+    });
 });
 
 app.listen(3000, () => console.log('🚀 Servidor en http://localhost:3000'));
