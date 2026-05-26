@@ -4,8 +4,100 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const stripe = require('stripe')('sk_test_51TYyduQyWORSQ9oNwKQsbBs2raDzLv4C9GVVUL8a33OVD0nTOTdGryg52agWHsEBe5jX4Cbla6TKYusGjAaCDagL00zaSY9L5f');
+
+// Stripe
+const stripe = require('stripe')('sk_test_51QcOuLQyWORSQ9oNeGOvOBaAyTqJbGXjlQX5nXuiCxn9wqPqBT77lCjPbBTtGr39sVXMYC3sJeUF7HkrKOlG68z000YuFxD0gy'); // Tu clave de prueba
+
 const app = express();
+
+// ============================================
+// ⚠️ IMPORTANTE: WEBHOOK PRIMERO (ANTES DE PARSEAR JSON)
+// ============================================
+
+app.post('/api/webhook-stripe', express.raw({type: 'application/json'}), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    
+    // ⬇️⬇️⬇️ PEGA AQUÍ TU SECRET ⬇️⬇️⬇️
+    const webhookSecret = 'whsec_c6e1075c4a1fce63badf410c7b35b373a06e6717de11e9da4b995fa4ba3d8a97';
+    
+    let event;
+    
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err) {
+        console.error('❌ Webhook error:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    
+    console.log('✅ Webhook recibido:', event.type);
+    
+    // Manejar eventos de Stripe
+    switch (event.type) {
+        case 'payment_intent.succeeded':
+            const paymentIntent = event.data.object;
+            console.log('💰 Pago exitoso:', paymentIntent.id);
+            console.log('💵 Monto:', paymentIntent.amount / 100, 'MXN');
+            
+            // Actualizar estado del pedido en BD
+            try {
+                await pool.request()
+                    .input('paymentIntentId', sql.NVarChar, paymentIntent.id)
+                    .query(`
+                        UPDATE Pedidos 
+                        SET EstadoPago = 'Pagado',
+                            EstadoPedido = 'Confirmado',
+                            FechaConfirmacion = GETDATE()
+                        WHERE StripePaymentIntentID = @paymentIntentId
+                    `);
+                console.log('✅ Pedido actualizado en BD');
+            } catch (dbError) {
+                console.error('❌ Error actualizando BD:', dbError.message);
+            }
+            break;
+            
+        case 'payment_intent.payment_failed':
+            const failedPayment = event.data.object;
+            console.log('❌ Pago fallido:', failedPayment.id);
+            
+            try {
+                await pool.request()
+                    .input('paymentIntentId', sql.NVarChar, failedPayment.id)
+                    .query(`
+                        UPDATE Pedidos 
+                        SET EstadoPago = 'Rechazado',
+                            EstadoPedido = 'Cancelado'
+                        WHERE StripePaymentIntentID = @paymentIntentId
+                    `);
+                console.log('✅ Pedido marcado como rechazado');
+            } catch (dbError) {
+                console.error('❌ Error actualizando BD:', dbError.message);
+            }
+            break;
+            
+        case 'charge.succeeded':
+            console.log('✅ Cargo exitoso');
+            break;
+            
+        case 'charge.updated':
+            console.log('🔄 Cargo actualizado');
+            break;
+            
+        case 'payment_intent.created':
+            console.log('📝 Payment Intent creado');
+            break;
+            
+        default:
+            console.log(`ℹ️ Evento no manejado: ${event.type}`);
+    }
+    
+    // Responder a Stripe que recibimos el webhook
+    res.json({ received: true });
+});
+
+// ============================================
+// ⬇️ AHORA SÍ LOS OTROS MIDDLEWARE ⬇️
+// ============================================
+
 app.use(cors());
 app.use(express.json());
 app.use('/imagenes', express.static('imagenes'));
@@ -21,6 +113,8 @@ function crearSlug(nombre) {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
 }
+
+
 
 // ============================================
 // CONFIGURACIÓN MULTER SIMPLE
@@ -1237,7 +1331,7 @@ app.post('/api/confirmar-pago-pedido', async (req, res) => {
 // WebHook de Stripe (para recibir eventos de pago)
 app.post('/api/webhook-stripe', express.raw({type: 'application/json'}), async (req, res) => {
     const sig = req.headers['stripe-signature'];
-    const webhookSecret = 'tu_webhook_secret'; // Lo obtendrás de Stripe Dashboard
+    const webhookSecret = 'whsec_c6e1075c4a1fce63badf410c7b35b373a06e6717de11e9da4b995fa4ba3d8a97'; // Lo obtendrás de Stripe Dashboard
     
     let event;
     
