@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - ParfumClubMX</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-perfil.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container-header">
+            <div class="logo">
+                <a href="index.html">🌸 ParfumClubMX</a>
+            </div>
+            <nav>
+                <a href="index.html">← Volver a la tienda</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <div class="perfil-container">
+        <!-- Sidebar Menú -->
+        <div class="perfil-sidebar">
+            <div class="perfil-avatar">
+                <div class="avatar-grande">👤</div>
+                <div id="nombre-perfil" style="font-size: 18px; font-weight: 700; margin-top: 10px;">Cargando...</div>
+                <div id="email-perfil" style="font-size: 13px; color: var(--gray); margin-top: 5px;">Cargando...</div>
+            </div>
+
+            <nav class="perfil-menu">
+                <button class="perfil-menu-item active" onclick="abrirSeccion('datos-personales', this)">
+                    👤 Datos Personales
+                </button>
+                <button class="perfil-menu-item" onclick="abrirSeccion('direcciones', this)">
+                    📍 Direcciones
+                </button>
+                <button class="perfil-menu-item" onclick="abrirSeccion('seguridad', this)">
+                    🔒 Seguridad
+                </button>
+                <button class="perfil-menu-item" onclick="abrirSeccion('notificaciones', this)">
+                    🔔 Notificaciones
+                </button>
+                <button class="perfil-menu-item" onclick="cerrarSesionPerfil()" style="color: var(--danger); margin-top: 20px;">
+                    🚪 Cerrar Sesión
+                </button>
+            </nav>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="perfil-contenido">
+
+            <!-- SECCIÓN 1: Datos Personales -->
+            <section id="seccion-datos-personales" class="perfil-seccion active">
+                <div class="perfil-header">
+                    <h1>👤 Datos Personales</h1>
+                    <p>Gestiona tu información de perfil</p>
+                </div>
+
+                <form id="form-datos-personales" class="perfil-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nombre *</label>
+                            <input type="text" id="input-nombre" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Apellido *</label>
+                            <input type="text" id="input-apellido" required>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>Email (no se puede cambiar)</label>
+                            <input type="email" id="input-email" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="tel" id="input-telefono">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Fecha de Nacimiento</label>
+                            <input type="date" id="input-fecha-nacimiento">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-guardar">
+                            💾 Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- SECCIÓN 2: Direcciones -->
+            <section id="seccion-direcciones" class="perfil-seccion">
+                <div class="perfil-header">
+                    <h1>📍 Mis Direcciones</h1>
+                    <p>Gestiona tus direcciones de envío</p>
+                </div>
+
+                <button class="btn-agregar-direccion" onclick="mostrarFormularioDireccionPerfil()">
+                    ➕ Agregar Nueva Dirección
+                </button>
+
+                <div id="lista-direcciones-perfil"></div>
+
+                <!-- Formulario Agregar Dirección (oculto inicialmente) -->
+                <div id="formulario-direccion-perfil" style="display: none;" class="formulario-direccion-perfil">
+                    <h3>Nueva Dirección</h3>
+                    <form id="form-agregar-direccion">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nombre completo *</label>
+                                <input type="text" id="dir-nombre" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Teléfono *</label>
+                                <input type="tel" id="dir-telefono" required>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label>Calle *</label>
+                                <input type="text" id="dir-calle" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Número exterior *</label>
+                                <input type="text" id="dir-num-ext" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Número interior</label>
+                                <input type="text" id="dir-num-int">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Colonia *</label>
+                                <input type="text" id="dir-colonia" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Ciudad *</label>
+                                <input type="text" id="dir-ciudad" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Estado *</label>
+                                <select id="dir-estado" required>
+                                    <option value="">Selecciona...</option>
+                                    <option value="Aguascalientes">Aguascalientes</option>
+                                    <option value="Baja California">Baja California</option>
+                                    <option value="Baja California Sur">Baja California Sur</option>
+                                    <option value="Campeche">Campeche</option>
+                                    <option value="Chiapas">Chiapas</option>
+                                    <option value="Chihuahua">Chihuahua</option>
+                                    <option value="CDMX">Ciudad de México</option>
+                                    <option value="Coahuila">Coahuila</option>
+                                    <option value="Colima">Colima</option>
+                                    <option value="Durango">Durango</option>
+                                    <option value="Guanajuato">Guanajuato</option>
+                                    <option value="Guerrero">Guerrero</option>
+                                    <option value="Hidalgo">Hidalgo</option>
+                                    <option value="Jalisco">Jalisco</option>
+                                    <option value="México">México</option>
+                                    <option value="Michoacán">Michoacán</option>
+                                    <option value="Morelos">Morelos</option>
+                                    <option value="Nayarit">Nayarit</option>
+                                    <option value="Nuevo León">Nuevo León</option>
+                                    <option value="Oaxaca">Oaxaca</option>
+                                    <option value="Puebla">Puebla</option>
+                                    <option value="Querétaro">Querétaro</option>
+                                    <option value="Quintana Roo">Quintana Roo</option>
+                                    <option value="San Luis Potosí">San Luis Potosí</option>
+                                    <option value="Sinaloa">Sinaloa</option>
+                                    <option value="Sonora">Sonora</option>
+                                    <option value="Tabasco">Tabasco</option>
+                                    <option value="Tamaulipas">Tamaulipas</option>
+                                    <option value="Tlaxcala">Tlaxcala</option>
+                                    <option value="Veracruz">Veracruz</option>
+                                    <option value="Yucatán">Yucatán</option>
+                                    <option value="Zacatecas">Zacatecas</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Código Postal *</label>
+                                <input type="text" id="dir-cp" maxlength="5" required>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label>Referencias (opcional)</label>
+                                <textarea id="dir-referencias" rows="2"></textarea>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="dir-predeterminada">
+                                    Usar como dirección predeterminada
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn-cancelar" onclick="ocultarFormularioDireccionPerfil()">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn-guardar">
+                                Guardar Dirección
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- SECCIÓN 3: Seguridad -->
+            <section id="seccion-seguridad" class="perfil-seccion">
+                <div class="perfil-header">
+                    <h1>🔒 Seguridad</h1>
+                    <p>Protege tu cuenta</p>
+                </div>
+
+                <form id="form-cambiar-contrasena" class="perfil-form">
+                    <h3 style="margin-bottom: 20px; font-size: 18px;">Cambiar Contraseña</h3>
+
+                    <div class="form-group">
+                        <label>Contraseña Actual *</label>
+                        <input type="password" id="input-password-actual" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nueva Contraseña *</label>
+                        <input type="password" id="input-password-nueva" required>
+                        <small style="color: var(--gray); margin-top: 5px; display: block;">
+                            Mínimo 8 caracteres
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Confirmar Nueva Contraseña *</label>
+                        <input type="password" id="input-password-confirmar" required>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-guardar">
+                            🔐 Cambiar Contraseña
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Sesiones Activas -->
+                <div style="margin-top: 40px; padding-top: 40px; border-top: 2px solid #f0f0f0;">
+                    <h3 style="margin-bottom: 20px; font-size: 18px;">Sesiones Activas</h3>
+                    <div style="background: #f9f9f9; padding: 20px; border-radius: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="font-weight: 600; margin-bottom: 5px;">🖥️ Este navegador</p>
+                                <p style="font-size: 13px; color: var(--gray);">Sesión actual activa</p>
+                            </div>
+                            <span style="background: var(--success); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">
+                                ACTIVA
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN 4: Notificaciones -->
+            <section id="seccion-notificaciones" class="perfil-seccion">
+                <div class="perfil-header">
+                    <h1>🔔 Notificaciones</h1>
+                    <p>Gestiona tus preferencias de notificaciones</p>
+                </div>
+
+                <div class="notificaciones-opciones">
+                    <div class="notificacion-item">
+                        <div class="notificacion-info">
+                            <h4>📧 Correos de Pedidos</h4>
+                            <p>Recibe confirmación cuando se procese tu pedido</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="notif-pedidos" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="notificacion-item">
+                        <div class="notificacion-info">
+                            <h4>📬 Actualizaciones de Envío</h4>
+                            <p>Recibe notificaciones cuando tu pedido sea enviado</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="notif-envios" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="notificacion-item">
+                        <div class="notificacion-info">
+                            <h4>🎁 Ofertas y Promociones</h4>
+                            <p>Recibe información sobre nuestras promociones especiales</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="notif-ofertas" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="notificacion-item">
+                        <div class="notificacion-info">
+                            <h4>⭐ Productos Nuevos</h4>
+                            <p>Entérate de nuevos productos y lanzamientos</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="notif-productos" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions" style="margin-top: 30px;">
+                    <button class="btn-guardar" onclick="guardarNotificaciones()">
+                        💾 Guardar Preferencias
+                    </button>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="perfil.js"></script>
+</body>
+</html>

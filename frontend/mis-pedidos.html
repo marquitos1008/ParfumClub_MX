@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Pedidos - ParfumClubMX</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-pedidos.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container-header">
+            <div class="logo">
+                <a href="index.html">🌸 ParfumClubMX</a>
+            </div>
+            <nav>
+                <a href="index.html">← Volver a la tienda</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="pedidos-container">
+        <div class="pedidos-header">
+            <h1>📦 Mis Pedidos</h1>
+            <p>Consulta el estado de tus compras</p>
+        </div>
+
+        <!-- Filtros -->
+        <div class="pedidos-filtros">
+            <button class="filtro-btn active" onclick="filtrarPedidos('todos', this)">Todos</button>
+            <button class="filtro-btn" onclick="filtrarPedidos('Pendiente', this)">Pendientes</button>
+            <button class="filtro-btn" onclick="filtrarPedidos('Confirmado', this)">Confirmados</button>
+            <button class="filtro-btn" onclick="filtrarPedidos('Enviado', this)">Enviados</button>
+            <button class="filtro-btn" onclick="filtrarPedidos('Entregado', this)">Entregados</button>
+            <button class="filtro-btn" onclick="filtrarPedidos('Cancelado', this)">Cancelados</button>
+        </div>
+
+        <!-- Lista de Pedidos -->
+        <div id="lista-pedidos">
+            <div class="loading">⏳ Cargando pedidos...</div>
+        </div>
+    </div>
+
+    <!-- Modal Detalle Pedido -->
+    <div id="modal-pedido" class="modal-overlay" style="display: none;">
+        <div class="modal-pedido-content">
+            <button class="btn-cerrar-modal" onclick="cerrarModalPedido()">✖️</button>
+            <div id="detalle-pedido-contenido"></div>
+        </div>
+    </div>
+
+    <script src="mis-pedidos.js"></script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+/* Toolbar */
+.pedidos-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.filtros-grupo {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filtros-grupo select,
+.filtros-grupo input[type="date"] {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+}
+
+.btn-limpiar {
+    padding: 10px 15px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.btn-limpiar:hover { background: #e0e0e0; }
+
+.busqueda-pedido input {
+    padding: 10px 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    width: 280px;
+    font-size: 14px;
+}
+
+/* Stats */
+.stats-pedidos {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-pedido-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border-top: 4px solid #e0e0e0;
+}
+
+.stat-pedido-card.pendiente { border-top-color: #f59e0b; }
+.stat-pedido-card.enviado { border-top-color: #06b6d4; }
+.stat-pedido-card.entregado { border-top-color: #10b981; }
+
+.stat-numero {
+    display: block;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: var(--gray);
+    font-weight: 600;
+}
+
+/* Tabla */
+.tabla-container {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.tabla-pedidos {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tabla-pedidos thead {
+    background: #f8f9fa;
+}
+
+.tabla-pedidos th {
+    padding: 15px 20px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.tabla-pedidos td {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 14px;
+    color: var(--dark);
+    vertical-align: middle;
+}
+
+.tabla-pedidos tr:hover td {
+    background: #fafafa;
+}
+
+.tabla-pedidos tr:last-child td {
+    border-bottom: none;
+}
+
+/* Badges en tabla */
+.badge-estado {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.badge-Pendiente { background: #fef3c7; color: #92400e; }
+.badge-Confirmado { background: #dbeafe; color: #1e40af; }
+.badge-Preparando { background: #ede9fe; color: #5b21b6; }
+.badge-Enviado { background: #cffafe; color: #155e75; }
+.badge-Entregado { background: #d1fae5; color: #065f46; }
+.badge-Cancelado { background: #fee2e2; color: #991b1b; }
+.badge-Pagado { background: #d1fae5; color: #065f46; }
+.badge-Rechazado { background: #fee2e2; color: #991b1b; }
+.badge-Pendiente-pago { background: #fef3c7; color: #92400e; }
+
+/* Acciones en tabla */
+.acciones-tabla {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-accion-tabla {
+    padding: 7px 14px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-accion-tabla.ver {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.btn-accion-tabla.ver:hover { background: #dbeafe; }
+
+/* Modal Admin */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.modal-admin-content {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 750px;
+    width: 100%;
+    margin: 40px auto;
+    position: relative;
+}
+
+.btn-cerrar-modal {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Formulario de actualización */
+.form-actualizar-pedido {
+    background: #f9f9f9;
+    border-radius: 12px;
+    padding: 25px;
+    margin-top: 20px;
+}
+
+.form-actualizar-pedido h3 {
+    font-size: 18px;
+    color: var(--dark);
+    margin-bottom: 20px;
+}
+
+.form-grid-pedido {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.form-grid-pedido .full {
+    grid-column: 1 / -1;
+}
+
+.form-grid-pedido label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 6px;
+}
+
+.form-grid-pedido select,
+.form-grid-pedido input {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.btn-actualizar-pedido {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-actualizar-pedido:hover {
+    background: var(--primary-dark);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .stats-pedidos { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .pedidos-toolbar { flex-direction: column; align-items: stretch; }
+    .busqueda-pedido input { width: 100%; }
+    .tabla-pedidos { font-size: 12px; }
+    .tabla-pedidos th, .tabla-pedidos td { padding: 10px; }
+}

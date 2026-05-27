@@ -1,20 +1,21 @@
 // ============================================
-// CHECKOUT.JS - CON INTEGRACIÓN STRIPE
+// CHECKOUT.JS - COMPLETO CON STRIPE
 // ============================================
 
 const API_URL = 'http://localhost:3000/api';
 let stripe;
 let cardElement;
-let clientSecret;
 let direccionSeleccionada = null;
 let metodoPagoSeleccionado = 'Tarjeta';
+let carrito = [];
 
 // ============================================
 // INICIALIZACIÓN
 // ============================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    verificarAutenticacion();
+    if (!verificarAutenticacion()) return;
+    cargarCarritoLocal();
     await cargarResumenPedido();
     await cargarDirecciones();
     await inicializarStripe();
@@ -26,6 +27,16 @@ function verificarAutenticacion() {
     if (!usuario) {
         alert('Debes iniciar sesión para realizar una compra');
         window.location.href = 'login.html';
+        return false;
+    }
+    return true;
+}
+
+function cargarCarritoLocal() {
+    carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+    if (carrito.length === 0) {
+        alert('Tu carrito está vacío');
+        window.location.href = 'index.html';
     }
 }
 
@@ -35,14 +46,11 @@ function verificarAutenticacion() {
 
 async function inicializarStripe() {
     try {
-        // Obtener clave pública de Stripe
         const response = await fetch(`${API_URL}/stripe-public-key`);
         const { publicKey } = await response.json();
         
-        // Inicializar Stripe
         stripe = Stripe(publicKey);
         
-        // Crear elementos de tarjeta
         const elements = stripe.elements();
         cardElement = elements.create('card', {
             style: {
@@ -50,9 +58,7 @@ async function inicializarStripe() {
                     fontSize: '16px',
                     color: '#32325d',
                     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    '::placeholder': {
-                        color: '#aab7c4'
-                    }
+                    '::placeholder': { color: '#aab7c4' }
                 },
                 invalid: {
                     color: '#fa755a',
@@ -63,7 +69,6 @@ async function inicializarStripe() {
         
         cardElement.mount('#card-element');
         
-        // Manejar errores de validación
         cardElement.on('change', (event) => {
             const displayError = document.getElementById('card-errors');
             if (event.error) {
@@ -79,34 +84,27 @@ async function inicializarStripe() {
 }
 
 // ============================================
-// CARGAR DATOS
+// CARGAR RESUMEN
 // ============================================
 
 async function cargarResumenPedido() {
-    const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-    
-    if (carrito.length === 0) {
-        alert('Tu carrito está vacío');
-        window.location.href = 'index.html';
-        return;
-    }
-    
     let subtotal = 0;
     let htmlProductos = '';
     
     for (const item of carrito) {
-        const precio = item.Precio || item.precioUnitario;
+        const precio = item.Precio || item.precioUnitario || 0;
         const itemSubtotal = precio * item.cantidad;
         subtotal += itemSubtotal;
         
         htmlProductos += `
             <div class="resumen-producto-item">
                 <img src="${API_URL.replace('/api', '')}/imagenes/productos/${item.ImagenPrincipal || 'placeholder.jpg'}" 
-                     alt="${item.Nombre}">
+                     alt="${item.Nombre}"
+                     onerror="this.src='https://via.placeholder.com/60x60?text=Sin+Imagen'">
                 <div class="resumen-producto-info">
                     <h4>${item.Nombre}</h4>
                     <p>Cantidad: ${item.cantidad}</p>
-                    <span class="resumen-producto-precio">$${precio.toFixed(2)}</span>
+                    <span class="resumen-producto-precio">$${precio.toFixed(2)} × ${item.cantidad}</span>
                 </div>
             </div>
         `;
@@ -122,6 +120,10 @@ async function cargarResumenPedido() {
     document.getElementById('resumen-total').textContent = `$${total.toFixed(2)}`;
 }
 
+// ============================================
+// DIRECCIONES
+// ============================================
+
 async function cargarDirecciones() {
     try {
         const usuario = JSON.parse(localStorage.getItem('usuario'));
@@ -131,26 +133,27 @@ async function cargarDirecciones() {
         const contenedor = document.getElementById('direcciones-guardadas');
         
         if (direcciones.length === 0) {
-            contenedor.innerHTML = '<p style="color: #666;">No tienes direcciones guardadas. Agrega una nueva.</p>';
+            contenedor.innerHTML = '<p style="color: #666; padding: 20px; text-align: center;">No tienes direcciones guardadas. Agrega una nueva.</p>';
             return;
         }
         
-        contenedor.innerHTML = direcciones.map(dir => `
+        contenedor.innerHTML = direcciones.map((dir, index) => `
             <div class="direccion-card ${dir.EsPredeterminada ? 'selected' : ''}" 
-                 onclick="seleccionarDireccion(${dir.DireccionID})">
+                 data-id="${dir.DireccionID}"
+                 onclick="seleccionarDireccion(${dir.DireccionID}, this)">
                 ${dir.EsPredeterminada ? '<span class="badge-predeterminada">Predeterminada</span>' : ''}
                 <h4>${dir.NombreCompleto}</h4>
                 <p>${dir.Calle} ${dir.NumeroExterior}${dir.NumeroInterior ? ' Int. ' + dir.NumeroInterior : ''}</p>
                 <p>${dir.Colonia}, ${dir.Ciudad}, ${dir.Estado} ${dir.CodigoPostal}</p>
                 <p>📞 ${dir.Telefono}</p>
-                ${dir.Referencias ? `<p class="referencias">📝 ${dir.Referencias}</p>` : ''}
+                ${dir.Referencias ? `<p style="margin-top: 8px; color: #666; font-size: 13px;">📝 ${dir.Referencias}</p>` : ''}
             </div>
         `).join('');
         
-        // Seleccionar la predeterminada automáticamente
         const predeterminada = direcciones.find(d => d.EsPredeterminada);
         if (predeterminada) {
-            seleccionarDireccion(predeterminada.DireccionID);
+            direccionSeleccionada = predeterminada.DireccionID;
+            document.getElementById('btn-continuar-pago').disabled = false;
         }
         
     } catch (error) {
@@ -158,30 +161,20 @@ async function cargarDirecciones() {
     }
 }
 
-// ============================================
-// SELECCIONAR DIRECCIÓN
-// ============================================
-
-function seleccionarDireccion(direccionId) {
-    // Remover selección anterior
+function seleccionarDireccion(direccionId, elemento) {
     document.querySelectorAll('.direccion-card').forEach(card => {
         card.classList.remove('selected');
     });
     
-    // Seleccionar nueva
-    event.currentTarget.classList.add('selected');
+    elemento.classList.add('selected');
     direccionSeleccionada = direccionId;
     
-    // Habilitar botón continuar
     document.getElementById('btn-continuar-pago').disabled = false;
 }
 
-// ============================================
-// FORMULARIO DE DIRECCIÓN
-// ============================================
-
 function mostrarFormularioDireccion() {
     document.getElementById('formulario-direccion').style.display = 'block';
+    window.scrollTo({ top: document.getElementById('formulario-direccion').offsetTop - 100, behavior: 'smooth' });
 }
 
 function ocultarFormularioDireccion() {
@@ -189,6 +182,7 @@ function ocultarFormularioDireccion() {
     document.getElementById('form-direccion').reset();
 }
 
+// Guardar nueva dirección
 document.getElementById('form-direccion').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -232,7 +226,7 @@ document.getElementById('form-direccion').addEventListener('submit', async (e) =
 });
 
 // ============================================
-// NAVEGACIÓN ENTRE PASOS
+// NAVEGACIÓN
 // ============================================
 
 function continuarAPago() {
@@ -243,27 +237,26 @@ function continuarAPago() {
     
     document.getElementById('seccion-direccion').style.display = 'none';
     document.getElementById('seccion-pago').style.display = 'block';
-    
     actualizarPasos(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function volverADireccion() {
     document.getElementById('seccion-pago').style.display = 'none';
     document.getElementById('seccion-confirmacion').style.display = 'none';
     document.getElementById('seccion-direccion').style.display = 'block';
-    
     actualizarPasos(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function volverAPago() {
     document.getElementById('seccion-confirmacion').style.display = 'none';
     document.getElementById('seccion-pago').style.display = 'block';
-    
     actualizarPasos(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function continuarAConfirmacion() {
-    // Obtener método de pago seleccionado
     metodoPagoSeleccionado = document.querySelector('input[name="metodoPago"]:checked').value;
     
     document.getElementById('seccion-pago').style.display = 'none';
@@ -271,6 +264,7 @@ function continuarAConfirmacion() {
     
     mostrarResumenConfirmacion();
     actualizarPasos(3);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function actualizarPasos(pasoActual) {
@@ -284,51 +278,67 @@ function actualizarPasos(pasoActual) {
     });
 }
 
-// ============================================
-// MOSTRAR RESUMEN DE CONFIRMACIÓN
-// ============================================
-
 function mostrarResumenConfirmacion() {
-    // Aquí mostrarías el resumen... lo continúo en el siguiente mensaje
+    // Mostrar método de pago
+    const metodosTexto = {
+        'Tarjeta': '💳 Tarjeta de Crédito/Débito (Stripe)',
+        'Efectivo': '💵 Efectivo contra entrega'
+    };
+    document.getElementById('confirmacion-pago').innerHTML = `<p>${metodosTexto[metodoPagoSeleccionado]}</p>`;
+    
+    // Mostrar productos
+    const htmlProductos = carrito.map(item => {
+        const precio = item.Precio || item.precioUnitario;
+        return `
+            <div class="resumen-producto-item">
+                <img src="${API_URL.replace('/api', '')}/imagenes/productos/${item.ImagenPrincipal}" 
+                     alt="${item.Nombre}">
+                <div class="resumen-producto-info">
+                    <h4>${item.Nombre}</h4>
+                    <p>Cantidad: ${item.cantidad} × $${precio.toFixed(2)}</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('confirmacion-productos').innerHTML = htmlProductos;
 }
 
 // ============================================
-// FINALIZAR PEDIDO CON STRIPE
+// FINALIZAR PEDIDO
 // ============================================
 
 async function finalizarPedido() {
-    const btnFinalizar = event.target;
+    const btnFinalizar = document.querySelector('.btn-finalizar');
     btnFinalizar.disabled = true;
-    btnFinalizar.textContent = 'Procesando pago...';
+    btnFinalizar.innerHTML = '⏳ Procesando pago...';
     
     try {
         const usuario = JSON.parse(localStorage.getItem('usuario'));
-        const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
         
         const subtotal = carrito.reduce((sum, item) => {
-            return sum + (item.Precio * item.cantidad);
+            return sum + ((item.Precio || item.precioUnitario) * item.cantidad);
         }, 0);
         
         const envio = subtotal >= 1500 ? 0 : 150;
         const total = subtotal + envio;
         
         if (metodoPagoSeleccionado === 'Tarjeta') {
-            // PAGO CON STRIPE
-            await procesarPagoStripe(usuario, carrito, subtotal, envio, total);
+            await procesarPagoStripe(usuario, subtotal, envio, total);
         } else {
-            // PAGO EN EFECTIVO
-            await procesarPedidoEfectivo(usuario, carrito, subtotal, envio, total);
+            await procesarPedidoEfectivo(usuario, subtotal, envio, total);
         }
         
     } catch (error) {
         console.error('Error:', error);
-        alert('Error al procesar el pedido: ' + error.message);
+        alert('❌ Error al procesar el pedido: ' + error.message);
+        const btnFinalizar = document.querySelector('.btn-finalizar');
         btnFinalizar.disabled = false;
-        btnFinalizar.textContent = '🎉 Finalizar Pedido';
+        btnFinalizar.innerHTML = '🎉 Finalizar Pedido';
     }
 }
 
-async function procesarPagoStripe(usuario, carrito, subtotal, envio, total) {
+async function procesarPagoStripe(usuario, subtotal, envio, total) {
     // 1. Crear Payment Intent
     const intentResponse = await fetch(`${API_URL}/crear-intencion-pago`, {
         method: 'POST',
@@ -360,7 +370,7 @@ async function procesarPagoStripe(usuario, carrito, subtotal, envio, total) {
     const items = carrito.map(item => ({
         productoId: item.ProductoID,
         cantidad: item.cantidad,
-        precioUnitario: item.Precio
+        precioUnitario: item.Precio || item.precioUnitario
     }));
     
     const pedidoResponse = await fetch(`${API_URL}/confirmar-pago-pedido`, {
@@ -382,14 +392,16 @@ async function procesarPagoStripe(usuario, carrito, subtotal, envio, total) {
     if (pedidoData.success) {
         mostrarExito(pedidoData.numeroPedido);
         localStorage.removeItem('carrito');
+    } else {
+        throw new Error(pedidoData.error || 'Error al crear pedido');
     }
 }
 
-async function procesarPedidoEfectivo(usuario, carrito, subtotal, envio, total) {
+async function procesarPedidoEfectivo(usuario, subtotal, envio, total) {
     const items = carrito.map(item => ({
         productoId: item.ProductoID,
         cantidad: item.cantidad,
-        precioUnitario: item.Precio
+        precioUnitario: item.Precio || item.precioUnitario
     }));
     
     const response = await fetch(`${API_URL}/pedidos`, {
@@ -411,12 +423,14 @@ async function procesarPedidoEfectivo(usuario, carrito, subtotal, envio, total) 
     if (data.success) {
         mostrarExito(data.numeroPedido);
         localStorage.removeItem('carrito');
+    } else {
+        throw new Error(data.error || 'Error al crear pedido');
     }
 }
 
 function mostrarExito(numeroPedido) {
     document.getElementById('numero-pedido-exito').textContent = numeroPedido;
-    document.getElementById('modal-exito').classList.add('active');
+    document.getElementById('modal-exito').style.display = 'flex';
 }
 
 // ============================================
@@ -424,7 +438,6 @@ function mostrarExito(numeroPedido) {
 // ============================================
 
 function configurarEventos() {
-    // Cambiar método de pago
     document.querySelectorAll('input[name="metodoPago"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const stripeContainer = document.getElementById('stripe-card-container');

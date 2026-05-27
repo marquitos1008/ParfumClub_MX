@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Favoritos - ParfumClubMX</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container-header">
+            <div class="logo">
+                <a href="index.html">🌸 ParfumClubMX</a>
+            </div>
+            <nav>
+                <a href="index.html">← Volver a la tienda</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <div style="max-width: 1200px; margin: 40px auto; padding: 0 20px;">
+        <div style="margin-bottom: 40px;">
+            <h1 style="font-size: 36px; color: var(--dark); margin-bottom: 10px;">❤️ Mis Favoritos</h1>
+            <p style="color: var(--gray); font-size: 16px;">Tus productos guardados para más tarde</p>
+        </div>
+
+        <!-- Filtros Simplificados -->
+        <div style="display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap;">
+            <button class="filtro-btn active" onclick="filtrarFavoritos('todos', this)">Todos</button>
+            <button class="filtro-btn" onclick="filtrarFavoritos('Hombre', this)">👨 Hombre</button>
+            <button class="filtro-btn" onclick="filtrarFavoritos('Mujer', this)">👩 Mujer</button>
+            <button class="filtro-btn" onclick="filtrarFavoritos('Unisex', this)">👥 Unisex</button>
+            <button class="filtro-btn" onclick="ordenarFavoritosPrecio(this)" style="margin-left: auto;">💰 Menor precio</button>
+        </div>
+
+        <!-- Grid de Productos Favoritos -->
+        <div id="favoritos-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 25px;">
+            <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
+                <div style="font-size: 80px; margin-bottom: 20px;">❤️</div>
+                <h3 style="font-size: 24px; color: var(--gray); margin-bottom: 10px;">
+                    Cargando tus favoritos...
+                </h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalle (igual al index) -->
+    <div id="modal-detalle" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarDetalle()">&times;</span>
+            <div id="detalle-contenido"></div>
+        </div>
+    </div>
+
+    <div id="overlay" class="overlay" onclick="cerrarTodo()"></div>
+
+    <script src="app.js"></script>
+    <script src="favoritos.js"></script>
+</body>
+</html>

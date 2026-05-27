@@ -107,11 +107,21 @@ function irAdmin() {
 }
 
 function irMisPedidos() {
-    alert('Funcionalidad de Pedidos próximamente');
+    if (!usuario) {
+        alert('Debes iniciar sesión para ver tus pedidos');
+        window.location.href = 'login.html';
+        return;
+    }
+    window.location.href = 'mis-pedidos.html';
 }
 
 function irMiCuenta() {
-    alert('Funcionalidad de Mi Cuenta próximamente');
+    if (!usuario) {
+        alert('Debes iniciar sesión');
+        window.location.href = 'login.html';
+        return;
+    }
+    window.location.href = 'perfil.html';
 }
 
 // ============================================
@@ -730,8 +740,9 @@ function procederCompra() {
         return;
     }
     
-    alert('Funcionalidad de Checkout próximamente\n\n' + 
-          'Total a pagar: ' + document.getElementById('carrito-total').textContent);
+    // Guardar carrito antes de ir a checkout
+    guardarCarritoLocal();
+    window.location.href = 'checkout.html';
 }
 
 function guardarCarritoLocal() {
@@ -771,22 +782,8 @@ function toggleFavorito(productoId) {
 }
 
 function irAFavoritos() {
-    if (favoritos.length === 0) {
-        alert('No tienes productos favoritos aún');
-        return;
-    }
-    
-    productosFiltrados = productos.filter(p => favoritos.includes(p.ProductoID));
-    document.getElementById('section-title').textContent = '❤️ Mis Favoritos';
-    mostrarProductos(productosFiltrados);
-    
-    // Scroll a productos
-    document.querySelector('.productos-section').scrollIntoView({ behavior: 'smooth' });
-    
-    // Cerrar menú de usuario
-    document.getElementById('user-dropdown').classList.add('hidden');
+    window.location.href = 'favoritos.html';
 }
-
 function guardarFavoritosLocal() {
     localStorage.setItem('favoritos', JSON.stringify(favoritos));
 }
